@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, Button, Alert } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/types";
 import { db, auth } from "../services/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type ReservationRouteProp = RouteProp<RootStackParamList, "Reservation">;
@@ -15,18 +15,33 @@ const Reservation = () => {
   const { hotel, room } = route.params;
 
   const handleReservation = async () => {
+    Alert.alert("Butona basıldı!");
+    const userId = auth.currentUser?.uid;
+  
+    if (!userId) {
+      Alert.alert("Hata", "Kullanıcı oturumu yok.");
+      return;
+    }
+  
     try {
-      await addDoc(collection(db, "reservations"), {
-        userId: auth.currentUser?.uid,
+      console.log("Firestore'a gönderilecek veri:", {
+        userId,
         hotelName: hotel.name,
         roomName: room.name,
-        createdAt: serverTimestamp(),
       });
-
-      Alert.alert("Rezervasyon Başarılı", `${hotel.name} - ${room.name}`);
+  
+      const docRef = await addDoc(collection(db, "reservations"), {
+        userId,
+        hotelName: hotel.name,
+        roomName: room.name,
+        createdAt: new Date(),
+      });
+  
+      Alert.alert("Rezervasyon Başarılı", `ID: ${docRef.id}`);
       navigation.navigate("ReservationHistory");
     } catch (error: any) {
-      Alert.alert("Hata", error.message);
+      console.error("Firestore Hatası:", error);
+      Alert.alert("Firestore Hatası", error.message);
     }
   };
 

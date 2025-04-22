@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db, auth } from "../services/firebase";
 
@@ -13,33 +15,35 @@ type Reservation = {
 const ReservationHistory = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
 
-  useEffect(() => {
-    const fetchReservations = async () => {
-      try {
-        const q = query(
-          collection(db, "reservations"),
-          where("userId", "==", auth.currentUser?.uid),
-          orderBy("createdAt", "desc")
-        );
+  useFocusEffect(
+    useCallback(() => {
+      const fetchReservations = async () => {
+        try {
+          const q = query(
+            collection(db, "reservations"),
+            where("userId", "==", auth.currentUser?.uid),
+            orderBy("createdAt", "desc")
+          );
 
-        const querySnapshot = await getDocs(q);
-        const results: Reservation[] = [];
+          const querySnapshot = await getDocs(q);
+          const results: Reservation[] = [];
 
-        querySnapshot.forEach((doc) => {
-          results.push({
-            id: doc.id,
-            ...doc.data(),
-          } as Reservation);
-        });
+          querySnapshot.forEach((doc) => {
+            results.push({
+              id: doc.id,
+              ...doc.data(),
+            } as Reservation);
+          });
 
-        setReservations(results);
-      } catch (error: any) {
-        console.error("Rezervasyonlar alınamadı:", error.message);
-      }
-    };
+          setReservations(results);
+        } catch (error: any) {
+          console.error("Rezervasyonlar alınamadı:", error.message);
+        }
+      };
 
-    fetchReservations();
-  }, []);
+      fetchReservations();
+    }, [])
+  );
 
   return (
     <ScrollView style={styles.container}>
