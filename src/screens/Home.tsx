@@ -1,109 +1,80 @@
 import React, { useEffect, useState } from "react";
-import {
-  Text,
-  View,
-  ScrollView,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { Text, ScrollView, StyleSheet, Alert } from "react-native";
+import { fetchHotels } from "../services/api";
+import { Hotel } from "../types/Hotel";
+import HotelCard from "../components/HotelCard";
+import { useFavorites } from "../context/FavoritesContext";
+import { auth } from "../services/firebase";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
-import { Hotel } from "../types/Hotel";
-import { fetchHotels } from "../services/api";
-import { auth, db } from "../services/firebase";
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  getDocs,
-  query,
-  where,
-  doc,
-} from "firebase/firestore";
+
+type HomeNavProp = NativeStackNavigationProp<RootStackParamList, "Home">;
 
 const Home = () => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList, "Home">>();
   const [hotels, setHotels] = useState<Hotel[]>([]);
-  const [favoriteHotelIds, setFavoriteHotelIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { favoriteHotelIds, addToFavorites, removeFromFavorites } = useFavorites();
+  const navigation = useNavigation<HomeNavProp>();
 
   useEffect(() => {
-    const load = async () => {
-      const hotelData = await fetchHotels();
-      setHotels(hotelData);
-      await fetchFavorites();
-      setLoading(false);
+    const loadHotels = async () => {
+      try {
+        const data = await fetchHotels();
+        setHotels(data);
+      } catch (error) {
+        console.error("Otel listesi alınamadı:", error);
+        Alert.alert("Hata", "Otel listesi yüklenirken bir hata oluştu.");
+      }
     };
-    load();
+    loadHotels();
   }, []);
 
-  const fetchFavorites = async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const q = query(collection(db, "favorites"), where("userId", "==", user.uid));
-    const snapshot = await getDocs(q);
-    const ids = snapshot.docs.map((doc) => doc.data().hotelId);
-    setFavoriteHotelIds(ids);
-  };
-
   const toggleFavorite = async (hotelId: string) => {
-    const user = auth.currentUser;
-    if (!user) return;
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert(
+          "Giriş Gerekli",
+          "Favorilere eklemek için giriş yapmalısınız.",
+          [
+            {
+              text: "Giriş Yap",
+              onPress: () => navigation.navigate("Login"),
+            },
+            {
+              text: "İptal",
+              style: "cancel",
+            },
+          ]
+        );
+        return;
+      }
 
-    const q = query(
-      collection(db, "favorites"),
-      where("userId", "==", user.uid),
-      where("hotelId", "==", hotelId)
-    );
-    const snapshot = await getDocs(q);
-
-    if (!snapshot.empty) {
-      await deleteDoc(doc(db, "favorites", snapshot.docs[0].id));
-      setFavoriteHotelIds((prev) => prev.filter((id) => id !== hotelId));
-    } else {
-      await addDoc(collection(db, "favorites"), { userId: user.uid, hotelId });
-      setFavoriteHotelIds((prev) => [...prev, hotelId]);
+      if (favoriteHotelIds.includes(hotelId)) {
+        await removeFromFavorites(hotelId);
+      } else {
+        await addToFavorites(hotelId);
+      }
+    } catch (error) {
+      console.error("Favori işlemi hatası:", error);
+      Alert.alert(
+        "Hata",
+        "Favori işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin."
+      );
     }
   };
-
-  if (loading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Otel Listesi</Text>
-      {hotels.map((hotel) => {
-        const isFavorite = favoriteHotelIds.includes(hotel.id);
-        return (
-          <View key={hotel.id} style={styles.card}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("HotelDetails", { hotel })}
-            >
-              <Image source={{ uri: hotel.image }} style={styles.image} />
-              <View style={styles.cardContent}>
-                <Text style={styles.name}>{hotel.name}</Text>
-                <Text style={styles.location}>📍 {hotel.location}</Text>
-                <Text style={styles.rating}>⭐ {hotel.rating}</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => toggleFavorite(hotel.id)}>
-              <Text style={styles.favoriteButton}>
-                {isFavorite ? "🗑️ Favoriden Çıkar" : "❤️ Favorilere Ekle"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        );
-      })}
+      {hotels.map((hotel) => (
+        <HotelCard
+          key={hotel.id}
+          hotel={hotel}
+          isFavorite={favoriteHotelIds.includes(hotel.id)}
+          onFavoriteToggle={() => toggleFavorite(hotel.id)}
+        />
+      ))}
     </ScrollView>
   );
 };
@@ -111,26 +82,14 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: { padding: 16, marginTop: 40 },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 16 },
-  loader: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 100,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-    marginBottom: 16,
-    elevation: 4,
-  },
-  image: { width: "100%", height: 160 },
-  cardContent: { padding: 12 },
-  name: { fontSize: 18, fontWeight: "bold", marginBottom: 4 },
-  location: { fontSize: 14, color: "#888" },
-  rating: { fontSize: 14, color: "#f5a623", marginTop: 4 },
-  favoriteButton: { marginTop: 10, color: "red", fontWeight: "bold", textAlign: "center" },
 });
 
 export default Home;
+
+
+
+
+
+
+
 

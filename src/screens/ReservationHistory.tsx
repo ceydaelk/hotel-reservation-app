@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from "firebase/firestore";
 import { db, auth } from "../services/firebase";
 
 type Reservation = {
@@ -15,32 +15,60 @@ type Reservation = {
 const ReservationHistory = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
 
+  const fetchReservations = async () => {
+    try {
+      const q = query(
+        collection(db, "reservations"),
+        where("userId", "==", auth.currentUser?.uid),
+        orderBy("createdAt", "desc")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const results: Reservation[] = [];
+
+      querySnapshot.forEach((doc) => {
+        results.push({
+          id: doc.id,
+          ...doc.data(),
+        } as Reservation);
+      });
+
+      setReservations(results);
+    } catch (error: any) {
+      console.error("Rezervasyonlar alınamadı:", error.message);
+      Alert.alert("Hata", "Rezervasyonlar yüklenirken bir hata oluştu.");
+    }
+  };
+
+  const handleDeleteReservation = async (reservationId: string) => {
+    try {
+      Alert.alert(
+        "Rezervasyonu Sil",
+        "Bu rezervasyonu silmek istediğinizden emin misiniz?",
+        [
+          {
+            text: "İptal",
+            style: "cancel",
+          },
+          {
+            text: "Sil",
+            style: "destructive",
+            onPress: async () => {
+              await deleteDoc(doc(db, "reservations", reservationId));
+              await fetchReservations();
+              Alert.alert("Başarılı", "Rezervasyon başarıyla silindi.");
+            },
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error("Rezervasyon silinemedi:", error.message);
+      Alert.alert("Hata", "Rezervasyon silinirken bir hata oluştu.");
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
-      const fetchReservations = async () => {
-        try {
-          const q = query(
-            collection(db, "reservations"),
-            where("userId", "==", auth.currentUser?.uid),
-            orderBy("createdAt", "desc")
-          );
-
-          const querySnapshot = await getDocs(q);
-          const results: Reservation[] = [];
-
-          querySnapshot.forEach((doc) => {
-            results.push({
-              id: doc.id,
-              ...doc.data(),
-            } as Reservation);
-          });
-
-          setReservations(results);
-        } catch (error: any) {
-          console.error("Rezervasyonlar alınamadı:", error.message);
-        }
-      };
-
       fetchReservations();
     }, [])
   );
@@ -53,8 +81,16 @@ const ReservationHistory = () => {
       ) : (
         reservations.map((item) => (
           <View key={item.id} style={styles.card}>
-            <Text style={styles.name}>{item.hotelName} - {item.roomName}</Text>
-            <Text style={styles.date}>Tarih: {item.createdAt?.toDate().toLocaleString()}</Text>
+            <View style={styles.cardContent}>
+              <Text style={styles.name}>{item.hotelName} - {item.roomName}</Text>
+              <Text style={styles.date}>Tarih: {item.createdAt?.toDate().toLocaleString()}</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.deleteButton}
+              onPress={() => handleDeleteReservation(item.id)}
+            >
+              <Text style={styles.deleteButtonText}>🗑️ Sil</Text>
+            </TouchableOpacity>
           </View>
         ))
       )}
@@ -83,6 +119,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 10,
     backgroundColor: "#f2f2f2",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  cardContent: {
+    flex: 1,
   },
   name: {
     fontSize: 18,
@@ -92,6 +134,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#888",
     marginTop: 4,
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  deleteButtonText: {
+    color: "#ff3b30",
+    fontWeight: "bold",
   },
 });
 
