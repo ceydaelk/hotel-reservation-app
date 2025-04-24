@@ -1,31 +1,79 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from "react-native";
+import { auth } from "../services/firebase";
 import { Hotel } from "../types/Hotel";
+import { useFavorites } from "../context/FavoritesContext";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/types";
+
+type HotelCardNavProp = NativeStackNavigationProp<RootStackParamList, "HotelDetails">;
 
 interface HotelCardProps {
   hotel: Hotel;
   isFavorite: boolean;
-  onToggleFavorite: (hotelId: string) => void;
-  onPress?: () => void;
+  onFavoriteToggle: () => void;
 }
 
-const HotelCard: React.FC<HotelCardProps> = ({ hotel, isFavorite, onToggleFavorite, onPress }) => {
+const HotelCard: React.FC<HotelCardProps> = ({ hotel, isFavorite, onFavoriteToggle }) => {
+  const navigation = useNavigation<HotelCardNavProp>();
+
+  const handleToggle = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert(
+          "Giriş Gerekli",
+          "Favorilere eklemek için giriş yapmalısınız.",
+          [
+            {
+              text: "Giriş Yap",
+              onPress: () => navigation.navigate("Login"),
+            },
+            {
+              text: "İptal",
+              style: "cancel",
+            },
+          ]
+        );
+        return;
+      }
+      await onFavoriteToggle();
+    } catch (error) {
+      console.error("Favori işlemi hatası:", error);
+      Alert.alert(
+        "Hata",
+        "Favori işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin."
+      );
+    }
+  };
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.card}>
-      <Image source={{ uri: hotel.image }} style={styles.image} />
-      <View style={styles.cardContent}>
-        <Text style={styles.name}>{hotel.name}</Text>
-        <Text style={styles.location}>📍 {hotel.location}</Text>
-        <View style={styles.row}>
+    <View style={styles.card}>
+      <TouchableOpacity 
+        style={styles.cardContent}
+        onPress={() => navigation.navigate("HotelDetails", { hotel })}
+      >
+        <Image source={{ uri: hotel.image }} style={styles.image} />
+        <View style={styles.infoContainer}>
+          <Text style={styles.name}>{hotel.name}</Text>
+          <Text style={styles.location}>📍 {hotel.location}</Text>
           <Text style={styles.rating}>⭐ {hotel.rating}</Text>
-          <TouchableOpacity onPress={() => onToggleFavorite(hotel.id)}>
-            <Text style={styles.favoriteText}>
-              {isFavorite ? "🗑️ Favoriden Çıkar" : "❤️ Favorilere Ekle"}
-            </Text>
-          </TouchableOpacity>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        onPress={handleToggle}
+        style={styles.favoriteButtonContainer}
+      >
+        <Text style={[
+          styles.favoriteButton,
+          isFavorite && styles.favoriteButtonActive
+        ]}>
+          {isFavorite ? "❤️ Favorilerden Çıkar" : "🤍 Favorilere Ekle"}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -35,17 +83,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     elevation: 4,
   },
-  image: {
-    width: "100%",
-    height: 160,
-  },
   cardContent: {
+    flexDirection: "row",
     padding: 12,
+  },
+  image: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+  },
+  infoContainer: {
+    flex: 1,
+    marginLeft: 12,
   },
   name: {
     fontSize: 18,
@@ -59,19 +110,22 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 14,
     color: "#f5a623",
-    fontWeight: "500",
+    marginTop: 4,
   },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 8,
+  favoriteButtonContainer: {
+    padding: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
   },
-  favoriteText: {
-    color: "#e63946",
+  favoriteButton: {
+    color: "#666",
     fontWeight: "bold",
-    marginLeft: 8,
+    textAlign: "center",
+  },
+  favoriteButtonActive: {
+    color: "#ff3b30",
   },
 });
 
 export default HotelCard;
+
