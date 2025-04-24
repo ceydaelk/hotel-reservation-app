@@ -5,8 +5,8 @@ import { Hotel } from "../types/Hotel";
 const BASE_URL = "https://68067bb5e81df7060eb74d1e.mockapi.io";
 
 /**
- * Otelleri API'den çeker.
- * @returns Hotel[] dizisi
+ 
+ * @returns 
  */
 export const fetchHotels = async (): Promise<Hotel[]> => {
   try {

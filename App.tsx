@@ -4,7 +4,7 @@ import { FavoritesProvider } from "./src/context/FavoritesContext"; // ⭐️
 
 const App = () => {
   return (
-    <FavoritesProvider> {/* 🔒 GLOBAL FAVORITE DURUMU */}
+    <FavoritesProvider> {/* GLOBAL FAVORITE DURUMU */}
       <AppNavigator />
     </FavoritesProvider>
   );

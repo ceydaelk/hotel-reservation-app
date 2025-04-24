@@ -5,7 +5,7 @@ import { auth } from "../services/firebase";
 import { useNavigation } from "@react-navigation/native";
 
 const Login = () => {
-  const navigation = useNavigation<any>(); // 👈 Burayı 'any' yapıyoruz
+  const navigation = useNavigation<any>(); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -13,10 +13,10 @@ const Login = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
 
-      // 👇 Reset yerine replace daha güvenli burada
+      
       navigation.replace("Main");
       
-      // Alternatif olarak: navigation.reset(...) de olur ama yukarıdaki daha temiz
+     
     } catch (error: any) {
       Alert.alert("Hata", error.message);
     }

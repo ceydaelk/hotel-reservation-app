@@ -21,7 +21,7 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
 
-// 💅 Home sekmesi içindeki stack
+// Home sekmesi içindeki stack
 const HomeStackScreen = () => (
   <HomeStack.Navigator screenOptions={{ headerShown: false }}>
     <HomeStack.Screen name="Home" component={Home} />
@@ -31,7 +31,7 @@ const HomeStackScreen = () => (
   </HomeStack.Navigator>
 );
 
-// 👑 Ana tabbar menüsü
+//  Ana tabbar menüsü
 const MainTabs = () => {
   const [user] = useState(auth.currentUser);
 

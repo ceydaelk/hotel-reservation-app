@@ -28,7 +28,7 @@ const Profile = () => {
             onPress: async () => {
               try {
                 await signOut(auth);
-                // Çıkış başarılı olduğunda otomatik olarak profil ekranı güncellenecek
+               
               } catch (error: any) {
                 console.error("Çıkış hatası:", error);
                 Alert.alert(
