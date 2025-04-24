@@ -32,39 +32,57 @@ const HomeStackScreen = () => (
 );
 
 // 👑 Ana tabbar menüsü
-const MainTabs = () => (
-  <Tab.Navigator
-    screenOptions={({ route }) => ({
-      tabBarIcon: ({ color, size }) => {
-        let iconName =
-          route.name === "HomeStack"
-            ? "home-outline"
-            : route.name === "ReservationHistory"
-            ? "book-outline"
-            : "person-outline";
-        return <Ionicons name={iconName as any} size={size} color={color} />;
-      },
-      headerShown: false,
-    })}
-  >
-    <Tab.Screen
-      name="HomeStack"
-      component={HomeStackScreen}
-      options={{ title: "Home" }}
-    />
-    <Tab.Screen name="ReservationHistory" component={ReservationHistory} />
-    <Tab.Screen name="Profile" component={Profile} />
-    <Tab.Screen name="Favorites" component={Favorites} options={{ title: "Favorilerim" }} />
-  </Tab.Navigator>
-);
+const MainTabs = () => {
+  const [user] = useState(auth.currentUser);
+
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          let iconName =
+            route.name === "HomeStack"
+              ? "home-outline"
+              : route.name === "ReservationHistory"
+              ? "book-outline"
+              : route.name === "Favorites"
+              ? "heart-outline"
+              : "person-outline";
+          return <Ionicons name={iconName as any} size={size} color={color} />;
+        },
+        headerShown: false,
+      })}
+    >
+      <Tab.Screen
+        name="HomeStack"
+        component={HomeStackScreen}
+        options={{ title: "Home" }}
+      />
+      {user && (
+        <Tab.Screen 
+          name="ReservationHistory" 
+          component={ReservationHistory}
+          options={{ title: "Rezervasyonlarım" }}
+        />
+      )}
+      <Tab.Screen 
+        name="Favorites" 
+        component={Favorites} 
+        options={{ title: "Favorilerim" }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={Profile}
+        options={{ title: "Profil" }}
+      />
+    </Tab.Navigator>
+  );
+};
 
 const AppNavigator = () => {
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    const unsubscribe = onAuthStateChanged(auth, () => {
       setLoading(false);
     });
     return unsubscribe;
@@ -75,14 +93,9 @@ const AppNavigator = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {user ? (
-          <Stack.Screen name="Main" component={MainTabs} />
-        ) : (
-          <>
-            <Stack.Screen name="Login" component={Login} />
-            <Stack.Screen name="Register" component={Register} />
-          </>
-        )}
+        <Stack.Screen name="Main" component={MainTabs} />
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Register" component={Register} />
       </Stack.Navigator>
     </NavigationContainer>
   );

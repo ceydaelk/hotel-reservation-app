@@ -31,6 +31,10 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, isFavorite, onFavoriteTogg
               onPress: () => navigation.navigate("Login"),
             },
             {
+              text: "Kayıt Ol",
+              onPress: () => navigation.navigate("Register"),
+            },
+            {
               text: "İptal",
               style: "cancel",
             },
