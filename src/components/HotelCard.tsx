@@ -6,6 +6,7 @@ import { useFavorites } from "../context/FavoritesContext";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
+import { Ionicons } from "@expo/vector-icons";
 
 type HotelCardNavProp = NativeStackNavigationProp<RootStackParamList, "HotelDetails">;
 
@@ -53,83 +54,142 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, isFavorite, onFavoriteTogg
   };
 
   return (
-    <View style={styles.card}>
-      <TouchableOpacity 
-        style={styles.cardContent}
-        onPress={() => navigation.navigate("HotelDetails", { hotel })}
-      >
+    <TouchableOpacity 
+      style={styles.card}
+      onPress={() => navigation.navigate("HotelDetails", { hotel })}
+    >
+      <View style={styles.imageContainer}>
         <Image source={{ uri: hotel.image }} style={styles.image} />
-        <View style={styles.infoContainer}>
-          <Text style={styles.name}>{hotel.name}</Text>
-          <Text style={styles.location}>📍 {hotel.location}</Text>
-          <Text style={styles.rating}>⭐ {hotel.rating}</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.favoriteButton}
+          onPress={handleToggle}
+        >
+          <Ionicons 
+            name={isFavorite ? "heart" : "heart-outline"} 
+            size={24} 
+            color={isFavorite ? "#ff3b30" : "#fff"} 
+          />
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity 
-        onPress={handleToggle}
-        style={styles.favoriteButtonContainer}
-      >
-        <Text style={[
-          styles.favoriteButton,
-          isFavorite && styles.favoriteButtonActive
-        ]}>
-          {isFavorite ? "❤️ Favorilerden Çıkar" : "🤍 Favorilere Ekle"}
-        </Text>
-      </TouchableOpacity>
-    </View>
+      <View style={styles.contentContainer}>
+        <View style={styles.mainInfo}>
+          <Text style={styles.name}>{hotel.name}</Text>
+          <Text style={styles.location}>
+            <Ionicons name="location-outline" size={14} color="#666" /> {hotel.location}
+          </Text>
+        </View>
+
+        <View style={styles.details}>
+          <View style={styles.amenities}>
+            <View style={styles.amenityItem}>
+              <Ionicons name="bed-outline" size={16} color="#666" />
+              <Text style={styles.amenityText}>2 Beds</Text>
+            </View>
+            <View style={styles.amenityItem}>
+              <Ionicons name="water-outline" size={16} color="#666" />
+              <Text style={styles.amenityText}>1 Bath</Text>
+            </View>
+            <View style={styles.amenityItem}>
+              <Ionicons name="people-outline" size={16} color="#666" />
+              <Text style={styles.amenityText}>4 Guest</Text>
+            </View>
+          </View>
+
+          <View style={styles.priceContainer}>
+            <Text style={styles.price}>${hotel.price}</Text>
+            <Text style={styles.priceUnit}>/night</Text>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: "hidden",
-    marginBottom: 16,
+    marginBottom: 20,
     elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
-  cardContent: {
-    flexDirection: "row",
-    padding: 12,
+  imageContainer: {
+    position: "relative",
+    height: 200,
   },
   image: {
-    width: 120,
-    height: 120,
-    borderRadius: 8,
+    width: "100%",
+    height: "100%",
   },
-  infoContainer: {
-    flex: 1,
-    marginLeft: 12,
+  favoriteButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  contentContainer: {
+    padding: 16,
+  },
+  mainInfo: {
+    marginBottom: 12,
   },
   name: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 4,
   },
   location: {
     fontSize: 14,
-    color: "#888",
-  },
-  rating: {
-    fontSize: 14,
-    color: "#f5a623",
-    marginTop: 4,
-  },
-  favoriteButtonContainer: {
-    padding: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-  favoriteButton: {
     color: "#666",
-    fontWeight: "bold",
-    textAlign: "center",
+    flexDirection: "row",
+    alignItems: "center",
   },
-  favoriteButtonActive: {
-    color: "#ff3b30",
+  details: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  amenities: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  amenityItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  amenityText: {
+    fontSize: 12,
+    color: "#666",
+  },
+  priceContainer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+  },
+  price: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  priceUnit: {
+    fontSize: 14,
+    color: "#666",
+    marginLeft: 4,
+    marginBottom: 2,
   },
 });
 
 export default HotelCard;
+
 

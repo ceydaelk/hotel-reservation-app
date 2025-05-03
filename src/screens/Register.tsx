@@ -1,21 +1,33 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../services/firebase";
+import { auth, db } from "../services/firebase";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
+import { doc, setDoc } from "firebase/firestore";
 
 type RegisterScreenNavProp = NativeStackNavigationProp<RootStackParamList, "Register">;
 
 const Register = () => {
   const navigation = useNavigation<RegisterScreenNavProp>();
+  const [name, setName] = useState("");
+  const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleRegister = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        firstName: name,
+        lastName: surname,
+        email: user.email,
+        createdAt: new Date(),
+      });;
+
       Alert.alert("Başarılı", "Kayıt tamamlandı. Şimdi giriş yapabilirsin.");
       navigation.navigate("Login");
     } catch (error: any) {
@@ -28,6 +40,18 @@ const Register = () => {
       <Text style={styles.title}>Kayıt Ol</Text>
 
       <TextInput
+        placeholder="Ad"
+        value={name}
+        onChangeText={setName}
+        style={styles.input}
+      />
+      <TextInput
+        placeholder="Soyad"
+        value={surname}
+        onChangeText={setSurname}
+        style={styles.input}
+      />
+      <TextInput
         placeholder="E-posta"
         value={email}
         onChangeText={setEmail}
@@ -35,7 +59,6 @@ const Register = () => {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-
       <TextInput
         placeholder="Şifre"
         value={password}
@@ -45,10 +68,7 @@ const Register = () => {
       />
 
       <Button title="Kayıt Ol" onPress={handleRegister} />
-      <Text
-        style={styles.link}
-        onPress={() => navigation.navigate("Login")}
-      >
+      <Text style={styles.link} onPress={() => navigation.navigate("Login")}>
         Zaten hesabın var mı? Giriş yap
       </Text>
     </View>
@@ -73,3 +93,4 @@ const styles = StyleSheet.create({
 });
 
 export default Register;
+

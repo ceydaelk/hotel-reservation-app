@@ -1,10 +1,10 @@
 import React from "react";
 import AppNavigator from "./src/navigation/AppNavigator";
-import { FavoritesProvider } from "./src/context/FavoritesContext"; // ⭐️
+import { FavoritesProvider } from "./src/context/FavoritesContext";
 
 const App = () => {
   return (
-    <FavoritesProvider> {/* GLOBAL FAVORITE DURUMU */}
+    <FavoritesProvider> 
       <AppNavigator />
     </FavoritesProvider>
   );
