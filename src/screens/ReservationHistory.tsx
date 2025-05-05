@@ -20,9 +20,14 @@ const ReservationHistory = () => {
 
   const fetchReservations = async () => {
     try {
+      const userId = auth.currentUser?.uid;
+      if (!userId) {
+        setReservations([]);
+        return;
+      }
       const q = query(
         collection(db, "reservations"),
-        where("userId", "==", auth.currentUser?.uid),
+        where("userId", "==", userId),
         orderBy("createdAt", "desc")
       );
 

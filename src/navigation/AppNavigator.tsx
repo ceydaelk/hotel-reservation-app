@@ -10,12 +10,13 @@ import Favorites from "../screens/Favorites";
 // Ekranlar
 import Home from "../screens/Home";
 import HotelDetails from "../screens/HotelDetails";
-import RoomSelection from "../screens/RoomSelection";
-import Reservation from "../screens/Reservation";
+// import RoomSelection from "../screens/RoomSelection";
+// import Reservation from "../screens/Reservation";
 import ReservationHistory from "../screens/ReservationHistory";
 import Profile from "../screens/Profile";
 import Login from "../screens/Login";
 import Register from "../screens/Register";
+import MainTabs from "./MainTabs";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -26,57 +27,13 @@ const HomeStackScreen = () => (
   <HomeStack.Navigator screenOptions={{ headerShown: false }}>
     <HomeStack.Screen name="Home" component={Home} />
     <HomeStack.Screen name="HotelDetails" component={HotelDetails} />
-    <HomeStack.Screen name="RoomSelection" component={RoomSelection} />
-    <HomeStack.Screen name="Reservation" component={Reservation} />
   </HomeStack.Navigator>
 );
 
 //  Ana tabbar menüsü
-const MainTabs = () => {
-  const [user] = useState(auth.currentUser);
-
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
-          let iconName =
-            route.name === "HomeStack"
-              ? "home-outline"
-              : route.name === "ReservationHistory"
-              ? "book-outline"
-              : route.name === "Favorites"
-              ? "heart-outline"
-              : "person-outline";
-          return <Ionicons name={iconName as any} size={size} color={color} />;
-        },
-        headerShown: false,
-      })}
-    >
-      <Tab.Screen
-        name="HomeStack"
-        component={HomeStackScreen}
-        options={{ title: "Home" }}
-      />
-      {user && (
-        <Tab.Screen 
-          name="ReservationHistory" 
-          component={ReservationHistory}
-          options={{ title: "Rezervasyonlarım" }}
-        />
-      )}
-      <Tab.Screen 
-        name="Favorites" 
-        component={Favorites} 
-        options={{ title: "Favorilerim" }}
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={Profile}
-        options={{ title: "Profil" }}
-      />
-    </Tab.Navigator>
-  );
-};
+// const MainTabs = () => {
+//   ...
+// };
 
 const AppNavigator = () => {
   const [loading, setLoading] = useState(true);
