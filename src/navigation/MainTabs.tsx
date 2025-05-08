@@ -6,7 +6,6 @@ import Favorites from "../screens/Favorites";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-// Ekranlar
 import Home from "../screens/Home";
 import HotelDetails from "../screens/HotelDetails";
 // import RoomSelection from "../screens/RoomSelection";
@@ -38,7 +37,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
             : route.name === "Favorites"
             ? "heart-outline"
             : route.name === "Profile"
-            ? "settings-outline"
+            ? "person-outline"
             : "ellipse-outline";
 
         const onPress = () => {
@@ -61,8 +60,15 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
             style={styles.tabButton}
             activeOpacity={0.8}
           >
-            <View style={[styles.iconWrapper, isFocused && styles.activeIconWrapper]}>
-              <Ionicons name={iconName as any} size={24} color={isFocused ? '#fff' : '#bbb'} />
+            <View style={[
+              styles.iconWrapper, 
+              isFocused ? styles.activeIconWrapper : styles.inactiveIconWrapper
+            ]}>
+              <Ionicons 
+                name={iconName as any} 
+                size={24} 
+                color={isFocused ? '#fff' : '#666'} 
+              />
             </View>
           </TouchableOpacity>
         );
@@ -88,10 +94,10 @@ const MainTabs = () => (
 const styles = StyleSheet.create({
   tabBarContainer: {
     flexDirection: 'row',
-    backgroundColor: '#111',
+    backgroundColor: '#fff',
     borderRadius: 30,
     marginHorizontal: 24,
-    marginBottom: 0,
+    marginBottom: 12,
     padding: 8,
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -106,11 +112,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapper: {
-    padding: 10,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   activeIconWrapper: {
     backgroundColor: '#222',
+  },
+  inactiveIconWrapper: {
+    backgroundColor: '#F5F5F5',
   },
 });
 

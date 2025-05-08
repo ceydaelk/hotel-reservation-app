@@ -4,11 +4,12 @@ import { fetchHotels } from "../services/api";
 import { Hotel } from "../types/Hotel";
 import HotelCard from "../components/HotelCard";
 import { useFavorites } from "../context/FavoritesContext";
-import { auth } from "../services/firebase";
+import { auth, db } from "../services/firebase";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { Ionicons } from "@expo/vector-icons";
+import { doc, getDoc } from "firebase/firestore";
 
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList, "Home">;
 
@@ -20,6 +21,8 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  const [userInitials, setUserInitials] = useState("CE");
 
   useEffect(() => {
     const loadHotels = async () => {
@@ -33,6 +36,22 @@ const Home = () => {
       }
     };
     loadHotels();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        // Firestore'dan kullanıcı bilgilerini al
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const initials = `${userData.firstName?.[0] || ''}${userData.lastName?.[0] || ''}`;
+          setUserInitials(initials.toUpperCase());
+        }
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleSearch = (text: string) => {
@@ -107,9 +126,16 @@ const Home = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Get Best Room!</Text>
-          <View style={styles.userIcon}>
-            <Ionicons name="person-circle-outline" size={32} color="#333" />
+          <View style={styles.userSection}>
+            <View style={styles.userAvatar}>
+              <Text style={styles.avatarText}>{userInitials}</Text>
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>
+                {currentUser ? `Hello, ${currentUser.displayName}` : 'Hello, Guest'}
+              </Text>
+              <Text style={styles.subtitle}>Get Best Room!</Text>
+            </View>
           </View>
         </View>
 
@@ -177,96 +203,137 @@ const Home = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
   },
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#333",
+  userSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  userIcon: {
+  userAvatar: {
     width: 40,
     height: 40,
-    justifyContent: "center",
-    alignItems: "center",
+    borderRadius: 20,
+    backgroundColor: '#8B3DFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  userInfo: {
+    justifyContent: 'center',
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
   },
   searchSection: {
-    padding: 20,
+    paddingHorizontal: 24,
+    gap: 12,
   },
   searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    marginBottom: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 12,
     fontSize: 16,
-    color: "#333",
+    color: "#1A1A1A",
+    paddingVertical: 0,
   },
   filterSection: {
-    gap: 10,
+    gap: 12,
   },
   filterRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
-    padding: 12,
-    paddingHorizontal: 15,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    justifyContent: "space-between",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   halfWidth: {
     flex: 1,
   },
   filterButtonText: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: 16,
+    color: "#666666",
     flex: 1,
-    marginLeft: 5,
+    marginLeft: 12,
   },
   priceInput: {
     flex: 1,
-    fontSize: 14,
-    color: "#666",
+    fontSize: 16,
+    color: "#1A1A1A",
     padding: 0,
   },
   searchButton: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 12,
-    padding: 15,
+    backgroundColor: "#2E7D32",
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: "center",
-    marginTop: 15,
+    marginTop: 16,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchButtonText: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+    letterSpacing: 0.2,
   },
   hotelList: {
-    padding: 20,
-    paddingTop: 0,
+    padding: 24,
+    paddingTop: 8,
+    gap: 16,
   },
 });
 

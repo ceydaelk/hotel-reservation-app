@@ -42,7 +42,7 @@ const HotelDetails = () => {
     }
 
     if (!checkInDate || !checkOutDate || nights <= 0) {
-      Alert.alert("Hata", "Lütfen geçerli giriş ve çıkış tarihi seçin.");
+      Alert.alert("Hata", "Lütfen geçerli birgiriş ve çıkış tarihi seçin.");
       return;
     }
 
@@ -77,42 +77,6 @@ const HotelDetails = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={{ padding: 20 }}>
-          <Text style={{ fontWeight: "bold", marginBottom: 8 }}>Giriş ve Çıkış Tarihi</Text>
-
-          <TouchableOpacity onPress={() => setShowCheckIn(true)} style={{ padding: 12, backgroundColor: '#eee', borderRadius: 8 }}>
-            <Text>Giriş Tarihi: {checkInDate ? checkInDate.toLocaleDateString() : 'Seçilmedi'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => setShowCheckOut(true)} style={{ padding: 12, backgroundColor: '#eee', borderRadius: 8, marginTop: 10 }}>
-            <Text>Çıkış Tarihi: {checkOutDate ? checkOutDate.toLocaleDateString() : 'Seçilmedi'}</Text>
-          </TouchableOpacity>
-
-          {showCheckIn && (
-            <DateTimePicker
-              value={checkInDate || new Date()}
-              mode="date"
-              display="default"
-              onChange={(e, date) => {
-                setShowCheckIn(false);
-                if (date) setCheckInDate(date);
-              }}
-            />
-          )}
-
-          {showCheckOut && (
-            <DateTimePicker
-              value={checkOutDate || new Date()}
-              mode="date"
-              display="default"
-              onChange={(e, date) => {
-                setShowCheckOut(false);
-                if (date) setCheckOutDate(date);
-              }}
-            />
-          )}
-        </View>
-
         <View style={styles.card}>
           <View style={styles.headerRow}>
             <View style={{ flex: 1 }}>
@@ -142,26 +106,34 @@ const HotelDetails = () => {
             </View>
           </View>
 
-          <View style={[styles.inputRow, { alignItems: 'center', marginBottom: 16 }]}>
-            <View style={styles.inputBox}>
-              <Text style={styles.inputLabel}>Kişi Sayısı</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <TouchableOpacity
-                  style={[styles.counterButton, guestCount === 1 && { opacity: 0.5 }]}
-                  onPress={() => setGuestCount((prev) => Math.max(1, prev - 1))}
-                  disabled={guestCount === 1}
-                >
-                  <Ionicons name="remove-circle-outline" size={28} color="#2E7D32" />
-                </TouchableOpacity>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', minWidth: 32, textAlign: 'center' }}>{guestCount}</Text>
-                <TouchableOpacity
-                  style={[styles.counterButton, guestCount === 10 && { opacity: 0.5 }]}
-                  onPress={() => setGuestCount((prev) => Math.min(10, prev + 1))}
-                  disabled={guestCount === 10}
-                >
-                  <Ionicons name="add-circle-outline" size={28} color="#2E7D32" />
-                </TouchableOpacity>
-              </View>
+          <View style={styles.datePickerContainer}>
+            <Text style={styles.sectionTitle}>Giriş ve Çıkış Tarihi</Text>
+            <TouchableOpacity onPress={() => setShowCheckIn(true)} style={styles.dateButton}>
+              <Text style={styles.dateText}>Giriş Tarihi: {checkInDate ? checkInDate.toLocaleDateString() : 'Seçilmedi'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowCheckOut(true)} style={styles.dateButton}>
+              <Text style={styles.dateText}>Çıkış Tarihi: {checkOutDate ? checkOutDate.toLocaleDateString() : 'Seçilmedi'}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.guestCounterContainer}>
+            <Text style={styles.inputLabel}>Kişi Sayısı</Text>
+            <View style={styles.counterRow}>
+              <TouchableOpacity
+                style={[styles.counterButton, guestCount === 1 && { opacity: 0.5 }]}
+                onPress={() => setGuestCount((prev) => Math.max(1, prev - 1))}
+                disabled={guestCount === 1}
+              >
+                <Ionicons name="remove-circle-outline" size={28} color="#2E7D32" />
+              </TouchableOpacity>
+              <Text style={styles.guestCount}>{guestCount}</Text>
+              <TouchableOpacity
+                style={[styles.counterButton, guestCount === 10 && { opacity: 0.5 }]}
+                onPress={() => setGuestCount((prev) => Math.min(10, prev + 1))}
+                disabled={guestCount === 10}
+              >
+                <Ionicons name="add-circle-outline" size={28} color="#2E7D32" />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -169,7 +141,7 @@ const HotelDetails = () => {
             <Text style={styles.price}>
               {nights > 0
                 ? `Toplam Fiyat: ${totalPrice.toLocaleString()}₺ (${nights} gece)`
-                : 'Lütfen geçerli giriş ve çıkış tarihi seçin'}
+                : 'Lütfen giriş ve çıkış tarihi seçin'}
             </Text>
           </View>
 
@@ -207,9 +179,6 @@ const HotelDetails = () => {
     </SafeAreaView>
   );
 };
-
-
-
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -385,6 +354,32 @@ const styles = StyleSheet.create({
   },
   counterButton: {
     padding: 4,
+  },
+  datePickerContainer: {
+    marginBottom: 16,
+  },
+  dateButton: {
+    padding: 12,
+    backgroundColor: '#eee',
+    borderRadius: 8,
+  },
+  dateText: {
+    fontSize: 15,
+    color: '#666',
+  },
+  guestCounterContainer: {
+    marginBottom: 16,
+  },
+  counterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  guestCount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    minWidth: 32,
+    textAlign: 'center',
   },
 });
 

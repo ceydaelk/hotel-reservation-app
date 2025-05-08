@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "../services/firebase";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -21,12 +21,16 @@ const Register = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      await updateProfile(user, {
+        displayName: name
+      });
+
       await setDoc(doc(db, "users", user.uid), {
         firstName: name,
         lastName: surname,
         email: user.email,
         createdAt: new Date(),
-      });;
+      });
 
       Alert.alert("Başarılı", "Kayıt tamamlandı. Şimdi giriş yapabilirsin.");
       navigation.navigate("Login");
