@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Text, ScrollView, StyleSheet, Alert, View, TextInput, TouchableOpacity, ImageBackground, SafeAreaView } from "react-native";
+import { Text, ScrollView, StyleSheet, Alert, View, TextInput, TouchableOpacity, ImageBackground, SafeAreaView, Modal } from "react-native";
 import { fetchHotels } from "../services/api";
 import { Hotel } from "../types/Hotel";
 import HotelCard from "../components/HotelCard";
@@ -10,6 +10,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
 import { Ionicons } from "@expo/vector-icons";
 import { doc, getDoc } from "firebase/firestore";
+import { Calendar } from 'react-native-calendars';
+import moment from 'moment';
 
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList, "Home">;
 
@@ -23,6 +25,10 @@ const Home = () => {
   const [maxPrice, setMaxPrice] = useState("");
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
   const [userInitials, setUserInitials] = useState("CE");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedStartDate, setSelectedStartDate] = useState<string | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<string | null>(null);
+  const [markedDates, setMarkedDates] = useState({});
 
   useEffect(() => {
     const loadHotels = async () => {
@@ -122,6 +128,59 @@ const Home = () => {
     }
   };
 
+  const handleDateSelect = (day: any) => {
+    if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+      // İlk tarih seçimi veya yeni bir seçim başlangıcı
+      const startDate = day.dateString;
+      setSelectedStartDate(startDate);
+      setSelectedEndDate(null);
+      setMarkedDates({
+        [startDate]: { startingDay: true, color: '#2E7D32', textColor: 'white' }
+      });
+    } else {
+      // Bitiş tarihi seçimi
+      const endDate = day.dateString;
+      if (moment(endDate).isBefore(selectedStartDate)) {
+        Alert.alert('Hata', 'Çıkış tarihi giriş tarihinden önce olamaz.');
+        return;
+      }
+      setSelectedEndDate(endDate);
+
+      // Tarih aralığını işaretle
+      const range = getDateRange(selectedStartDate, endDate);
+      setMarkedDates(range);
+      
+      // Tarihler seçildiğinde modal'ı kapat
+      setTimeout(() => setShowDatePicker(false), 500);
+    }
+  };
+
+  const getDateRange = (startDate: string, endDate: string) => {
+    const range: any = {};
+    let currentDate = moment(startDate);
+    const lastDate = moment(endDate);
+
+    while (currentDate.isSameOrBefore(lastDate)) {
+      const dateString = currentDate.format('YYYY-MM-DD');
+      if (dateString === startDate) {
+        range[dateString] = { startingDay: true, color: '#2E7D32', textColor: 'white' };
+      } else if (dateString === endDate) {
+        range[dateString] = { endingDay: true, color: '#2E7D32', textColor: 'white' };
+      } else {
+        range[dateString] = { color: '#2E7D32', textColor: 'white' };
+      }
+      currentDate = currentDate.add(1, 'days');
+    }
+    return range;
+  };
+
+  const formatDateRange = () => {
+    if (selectedStartDate && selectedEndDate) {
+      return `${moment(selectedStartDate).format('DD MMM')} - ${moment(selectedEndDate).format('DD MMM')}`;
+    }
+    return 'Check In - Check Out';
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
@@ -151,9 +210,12 @@ const Home = () => {
           </View>
           
           <View style={styles.filterSection}>
-            <TouchableOpacity style={styles.filterButton}>
+            <TouchableOpacity 
+              style={styles.filterButton}
+              onPress={() => setShowDatePicker(true)}
+            >
               <Ionicons name="calendar-outline" size={20} color="#666" />
-              <Text style={styles.filterButtonText}>Check In - Check Out</Text>
+              <Text style={styles.filterButtonText}>{formatDateRange()}</Text>
               <Ionicons name="chevron-down" size={20} color="#666" />
             </TouchableOpacity>
 
@@ -184,6 +246,36 @@ const Home = () => {
             <Text style={styles.searchButtonText}>Search</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Date Picker Modal */}
+        <Modal
+          visible={showDatePicker}
+          transparent={true}
+          animationType="slide"
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Tarih Seçin</Text>
+                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
+              <Calendar
+                onDayPress={handleDateSelect}
+                markedDates={markedDates}
+                markingType="period"
+                minDate={moment().format('YYYY-MM-DD')}
+                theme={{
+                  todayTextColor: '#2E7D32',
+                  textDayFontSize: 16,
+                  textMonthFontSize: 16,
+                  textDayHeaderFontSize: 16,
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
 
         <View style={styles.hotelList}>
           {filteredHotels.map((hotel) => (
@@ -334,6 +426,30 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 8,
     gap: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
   },
 });
 

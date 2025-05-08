@@ -116,6 +116,40 @@ const HotelDetails = () => {
             </TouchableOpacity>
           </View>
 
+          {showCheckIn && (
+            <DateTimePicker
+              value={checkInDate || new Date()}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowCheckIn(false);
+                if (selectedDate) {
+                  setCheckInDate(selectedDate);
+                  // Reset checkout date if it's before check-in
+                  if (checkOutDate && selectedDate > checkOutDate) {
+                    setCheckOutDate(null);
+                  }
+                }
+              }}
+              minimumDate={new Date()}
+            />
+          )}
+
+          {showCheckOut && (
+            <DateTimePicker
+              value={checkOutDate || new Date()}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowCheckOut(false);
+                if (selectedDate) {
+                  setCheckOutDate(selectedDate);
+                }
+              }}
+              minimumDate={checkInDate || new Date()}
+            />
+          )}
+
           <View style={styles.guestCounterContainer}>
             <Text style={styles.inputLabel}>Kişi Sayısı</Text>
             <View style={styles.counterRow}>
@@ -282,7 +316,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   price: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#222',
   },
