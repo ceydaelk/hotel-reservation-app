@@ -40,7 +40,24 @@ const HotelDetails = () => {
   const handleReservation = async () => {
     const userId = auth.currentUser?.uid;
     if (!userId) {
-      Alert.alert("Hata", "Kullanıcı oturumu yok.");
+      Alert.alert(
+        "Giriş Gerekli",
+        "Rezervasyon yapabilmek için lütfen giriş yapın veya kayıt olun.",
+        [
+          {
+            text: "Giriş Yap",
+            onPress: () => navigation.navigate("Login"),
+          },
+          {
+            text: "Kayıt Ol",
+            onPress: () => navigation.navigate("Register"),
+          },
+          {
+            text: "İptal",
+            style: "cancel",
+          },
+        ]
+      );
       return;
     }
 

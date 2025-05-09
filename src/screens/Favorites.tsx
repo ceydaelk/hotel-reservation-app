@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Alert, SafeAreaView } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Alert, SafeAreaView, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { fetchHotels } from "../services/api";
 import HotelCard from "../components/HotelCard";
 import { Hotel } from "../types/Hotel";
@@ -7,9 +9,19 @@ import { useFavorites } from "../context/FavoritesContext";
 import { auth } from "../services/firebase";
 import { Ionicons } from "@expo/vector-icons";
 
+type RootStackParamList = {
+  Login: undefined;
+  Register: undefined;
+  Main: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 const Favorites = () => {
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const { favoriteHotelIds, removeFromFavorites } = useFavorites();
+  const navigation = useNavigation<NavigationProp>();
+  const user = auth.currentUser;
 
   useEffect(() => {
     const loadFavorites = async () => {
@@ -44,15 +56,37 @@ const Favorites = () => {
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Favorilerim</Text>
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{hotels.length}</Text>
-              <Text style={styles.statLabel}>Toplam</Text>
+          {user && (
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{hotels.length}</Text>
+                <Text style={styles.statLabel}>Toplam</Text>
+              </View>
             </View>
-          </View>
+          )}
         </View>
 
-        {hotels.length === 0 ? (
+        {!user ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="person-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyText}>Giriş Yapın</Text>
+            <Text style={styles.emptySubText}>Favorilerinizi görmek için giriş yapın veya kayıt olun</Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={[styles.button, styles.loginButton]} 
+                onPress={() => navigation.navigate("Login")}
+              >
+                <Text style={styles.buttonText}>Giriş Yap</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.button, styles.registerButton]}
+                onPress={() => navigation.navigate("Register")}
+              >
+                <Text style={styles.buttonText}>Kayıt Ol</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : hotels.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="heart-outline" size={64} color="#ccc" />
             <Text style={styles.emptyText}>Henüz favori otel yok</Text>
@@ -132,6 +166,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#999",
     marginTop: 8,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    marginTop: 20,
+    gap: 10,
+  },
+  button: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  loginButton: {
+    backgroundColor: 'gray',
+  },
+  registerButton: {
+    backgroundColor: '#2E7D32',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
