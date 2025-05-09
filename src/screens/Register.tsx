@@ -11,10 +11,11 @@ import {
   Alert,
 } from "react-native";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "../services/firebase";
+import { auth, db } from "../services/firebase";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types";
+import { doc, setDoc } from "firebase/firestore";
 
 type RegisterScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -31,12 +32,47 @@ const Register = () => {
     }
 
     try {
+      console.log("Kullanıcı kaydı başlatılıyor...");
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("Firebase Auth kaydı başarılı, UID:", userCredential.user.uid);
+      
+      // Update user profile with display name
       await updateProfile(userCredential.user, {
         displayName: name,
       });
-      navigation.replace("Main");
+      console.log("Kullanıcı profili güncellendi");
+
+      // Split name into first and last name
+      const [firstName, ...lastNameParts] = name.split(" ");
+      const lastName = lastNameParts.join(" ");
+
+      // Create user document in Firestore
+      try {
+        console.log("Firestore'a kullanıcı verisi kaydediliyor...");
+        const userDocRef = doc(db, "users", userCredential.user.uid);
+        const userData = {
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          uid: userCredential.user.uid
+        };
+        
+        await setDoc(userDocRef, userData, { merge: true });
+        console.log("Firestore'a kullanıcı verisi başarıyla kaydedildi");
+        
+        navigation.replace("Main");
+      } catch (firestoreError: any) {
+        console.error("Firestore kayıt hatası:", JSON.stringify(firestoreError));
+        Alert.alert(
+          "Uyarı",
+          "Hesabınız oluşturuldu ancak profil bilgileriniz kaydedilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
+        );
+        navigation.replace("Main");
+      }
     } catch (error: any) {
+      console.error("Kayıt hatası:", error);
       Alert.alert("Hata", error.message);
     }
   };
