@@ -153,11 +153,11 @@ const ReservationHistory = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
   },
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    padding: 16,
   },
   header: {
     padding: 20,

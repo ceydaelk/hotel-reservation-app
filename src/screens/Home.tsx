@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Text, ScrollView, StyleSheet, Alert, View, TextInput, TouchableOpacity, ImageBackground, SafeAreaView, Modal } from "react-native";
+import { Text, ScrollView, StyleSheet, Alert, View, TextInput, TouchableOpacity, ImageBackground, SafeAreaView, Modal, Platform, StatusBar } from "react-native";
 import { fetchHotels } from "../services/api";
 import { Hotel } from "../types/Hotel";
 import HotelCard from "../components/HotelCard";
@@ -56,20 +56,20 @@ const Home = () => {
             if (initials.trim()) {
               setUserInitials(initials.toUpperCase());
             } else if (user.displayName) {
-              // Fallback to displayName if Firestore data doesn't have initials
+             
               const names = user.displayName.split(' ');
               const displayNameInitials = `${names[0]?.[0] || ''}${names[names.length - 1]?.[0] || ''}`;
               setUserInitials(displayNameInitials.toUpperCase());
             }
           } else if (user.displayName) {
-            // If no Firestore document exists, use displayName
+         
             const names = user.displayName.split(' ');
             const displayNameInitials = `${names[0]?.[0] || ''}${names[names.length - 1]?.[0] || ''}`;
             setUserInitials(displayNameInitials.toUpperCase());
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
-          // Fallback to displayName in case of error
+         
           if (user.displayName) {
             const names = user.displayName.split(' ');
             const displayNameInitials = `${names[0]?.[0] || ''}${names[names.length - 1]?.[0] || ''}`;
@@ -77,7 +77,7 @@ const Home = () => {
           }
         }
       } else {
-        setUserInitials(""); // Clear initials when user is not logged in
+        setUserInitials(""); 
       }
     });
     return () => unsubscribe();
@@ -205,70 +205,92 @@ const Home = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.userSection}>
-            <View style={styles.userAvatar}>
-              <Text style={styles.avatarText}>{userInitials}</Text>
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>
-                {currentUser ? `Hello, ${currentUser.displayName}` : 'Hello, Guest'}
-              </Text>
-              <Text style={styles.subtitle}>Get Best Room!</Text>
+    <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor="#fff"
+      />
+      <SafeAreaView style={styles.safeTop} />
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <View style={styles.userSection}>
+              <View style={styles.userAvatar}>
+                <Text style={styles.avatarText}>{userInitials}</Text>
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>
+                  {currentUser ? `Hello, ${currentUser.displayName}` : 'Hello, Guest'}
+                </Text>
+                <Text style={styles.subtitle}>Get Best Room!</Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        <View style={styles.searchSection}>
-          <View style={styles.searchBar}>
-            <Ionicons name="search-outline" size={20} color="#666" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search address, city, zip"
-              value={searchQuery}
-              onChangeText={handleSearch}
-            />
-          </View>
-          
-          <View style={styles.filterSection}>
-            <TouchableOpacity 
-              style={styles.filterButton}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Ionicons name="calendar-outline" size={20} color="#666" />
-              <Text style={styles.filterButtonText}>{formatDateRange()}</Text>
-              <Ionicons name="chevron-down" size={20} color="#666" />
+          <View style={styles.searchSection}>
+            <View style={styles.searchBar}>
+              <Ionicons name="search-outline" size={20} color="#666" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search address, city, zip"
+                value={searchQuery}
+                onChangeText={handleSearch}
+              />
+            </View>
+            
+            <View style={styles.filterSection}>
+              <TouchableOpacity 
+                style={styles.filterButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Ionicons name="calendar-outline" size={20} color="#666" />
+                <Text style={styles.filterButtonText}>{formatDateRange()}</Text>
+                <Ionicons name="chevron-down" size={20} color="#666" />
+              </TouchableOpacity>
+
+              <View style={styles.filterRow}>
+                <View style={[styles.filterButton, styles.halfWidth]}>
+                  <TextInput
+                    style={styles.priceInput}
+                    placeholder="Min Price"
+                    keyboardType="numeric"
+                    value={minPrice}
+                    onChangeText={(value) => handlePriceChange(value, maxPrice)}
+                  />
+                </View>
+                
+                <View style={[styles.filterButton, styles.halfWidth]}>
+                  <TextInput
+                    style={styles.priceInput}
+                    placeholder="Max Price"
+                    keyboardType="numeric"
+                    value={maxPrice}
+                    onChangeText={(value) => handlePriceChange(minPrice, value)}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.searchButton}>
+              <Text style={styles.searchButtonText}>Search</Text>
             </TouchableOpacity>
-
-            <View style={styles.filterRow}>
-              <View style={[styles.filterButton, styles.halfWidth]}>
-                <TextInput
-                  style={styles.priceInput}
-                  placeholder="Min Price"
-                  keyboardType="numeric"
-                  value={minPrice}
-                  onChangeText={(value) => handlePriceChange(value, maxPrice)}
-                />
-              </View>
-              
-              <View style={[styles.filterButton, styles.halfWidth]}>
-                <TextInput
-                  style={styles.priceInput}
-                  placeholder="Max Price"
-                  keyboardType="numeric"
-                  value={maxPrice}
-                  onChangeText={(value) => handlePriceChange(minPrice, value)}
-                />
-              </View>
-            </View>
           </View>
 
-          <TouchableOpacity style={styles.searchButton}>
-            <Text style={styles.searchButtonText}>Search</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.hotelList}>
+            {filteredHotels.map((hotel) => (
+              <HotelCard
+                key={hotel.id}
+                hotel={hotel}
+                isFavorite={favoriteHotelIds.includes(hotel.id)}
+                onFavoriteToggle={() => toggleFavorite(hotel.id)}
+              />
+            ))}
+          </View>
+        </ScrollView>
 
         {/* Date Picker Modal */}
         <Modal
@@ -299,87 +321,86 @@ const Home = () => {
             </View>
           </View>
         </Modal>
-
-        <View style={styles.hotelList}>
-          {filteredHotels.map((hotel) => (
-            <HotelCard
-              key={hotel.id}
-              hotel={hotel}
-              isFavorite={favoriteHotelIds.includes(hotel.id)}
-              onFavoriteToggle={() => toggleFavorite(hotel.id)}
-            />
-          ))}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#fff',
+  },
+  safeTop: {
+    flex: 0,
+    backgroundColor: '#fff',
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'android' ? 8 : 0,
+    paddingBottom: 12,
+    backgroundColor: '#fff',
   },
   userSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   userAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#8B3DFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   avatarText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   userInfo: {
     justifyContent: 'center',
   },
   userName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
     color: '#333',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
   },
   searchSection: {
-    paddingHorizontal: 24,
-    gap: 12,
+    paddingHorizontal: 20,
+    gap: 10,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
-    borderRadius: 16,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   searchIcon: {
     marginRight: 12,
@@ -446,9 +467,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   hotelList: {
-    padding: 24,
-    paddingTop: 8,
-    gap: 16,
+    padding: 20,
+    paddingTop: 4,
+    gap: 12,
   },
   modalContainer: {
     flex: 1,

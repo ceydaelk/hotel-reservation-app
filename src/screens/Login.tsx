@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  SafeAreaView,
 } from "react-native";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../services/firebase";
@@ -38,53 +39,58 @@ const Login = () => {
   };
 
   return (
-    <ImageBackground
-      source={{ uri: "https://images.pexels.com/photos/24877163/pexels-photo-24877163/free-photo-of-restoran-gun-dogumu-safak-fotografcilik.jpeg" }}
-      style={styles.background}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
+    <SafeAreaView style={styles.safeArea}>
+      <ImageBackground
+        source={{ uri: "https://images.pexels.com/photos/24877163/pexels-photo-24877163/free-photo-of-restoran-gun-dogumu-safak-fotografcilik.jpeg" }}
+        style={styles.background}
       >
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>Hoş Geldiniz</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="E-posta"
-              placeholderTextColor="rgba(255, 255, 255, 0.7)"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Şifre"
-              placeholderTextColor="rgba(255, 255, 255, 0.7)"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.container}
+        >
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>Hoş Geldiniz</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="E-posta"
+                placeholderTextColor="rgba(255, 255, 255, 0.7)"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Şifre"
+                placeholderTextColor="rgba(255, 255, 255, 0.7)"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.buttonText}>Giriş Yap</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={() => navigation.navigate("Register")}
+            >
+              <Text style={styles.registerText}>Hesabınız yok mu? Kayıt olun</Text>
+            </TouchableOpacity>
           </View>
-
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Giriş Yap</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.registerButton}
-            onPress={() => navigation.navigate("Register")}
-          >
-            <Text style={styles.registerText}>Hesabınız yok mu? Kayıt olun</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </ImageBackground>
+        </KeyboardAvoidingView>
+      </ImageBackground>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   background: {
     flex: 1,
     width: "100%",

@@ -23,11 +23,11 @@ const Profile = () => {
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = docSnap.data();
-            console.log("Fetched user data:", data); // Debug log
+            console.log("Fetched user data:", data); 
             setUserData(data);
           } else {
-            console.log("No user document found!"); // Debug log
-            // Eğer Firestore'da veri yoksa, displayName'i parçalayarak gösterelim
+            console.log("No user document found!"); 
+           
             if (user.displayName) {
               const [firstName, ...lastNameParts] = user.displayName.split(" ");
               const lastName = lastNameParts.join(" ");

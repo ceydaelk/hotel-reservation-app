@@ -76,11 +76,11 @@ const Favorites = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#fff',
   },
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    padding: 16,
   },
   header: {
     flexDirection: "row",

@@ -8,11 +8,13 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFavorites } from "../context/FavoritesContext";
 
 type HotelDetailsRouteProp = RouteProp<RootStackParamList, "HotelDetails">;
 type HotelDetailsNavProp = NativeStackNavigationProp<RootStackParamList, "HotelDetails">;
 
 const HotelDetails = () => {
+  const { favoriteHotelIds, addToFavorites, removeFromFavorites } = useFavorites();
   const [guestCount, setGuestCount] = useState(1);
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
@@ -22,6 +24,7 @@ const HotelDetails = () => {
   const route = useRoute<HotelDetailsRouteProp>();
   const navigation = useNavigation<HotelDetailsNavProp>();
   const { hotel } = route.params;
+  const isFavorite = favoriteHotelIds.includes(hotel.id);
 
   const calculateNights = () => {
     if (checkInDate && checkOutDate) {
@@ -64,6 +67,41 @@ const HotelDetails = () => {
     }
   };
 
+  const handleFavoriteToggle = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        Alert.alert(
+          "Giriş Gerekli",
+          "Favorilere eklemek için giriş yapmalısınız.",
+          [
+            {
+              text: "Giriş Yap",
+              onPress: () => navigation.navigate("Login"),
+            },
+            {
+              text: "İptal",
+              style: "cancel",
+            },
+          ]
+        );
+        return;
+      }
+
+      if (isFavorite) {
+        await removeFromFavorites(hotel.id);
+      } else {
+        await addToFavorites(hotel.id);
+      }
+    } catch (error) {
+      console.error("Favori işlemi hatası:", error);
+      Alert.alert(
+        "Hata",
+        "Favori işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin."
+      );
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
@@ -86,8 +124,15 @@ const HotelDetails = () => {
                 <Text style={styles.location}>{hotel.location}</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.saveButton}>
-              <Ionicons name="bookmark-outline" size={24} color="#222" />
+            <TouchableOpacity 
+              style={[styles.favoriteButton, isFavorite && styles.favoriteButtonActive]} 
+              onPress={handleFavoriteToggle}
+            >
+              <Ionicons 
+                name={isFavorite ? "heart" : "heart-outline"} 
+                size={24} 
+                color={isFavorite ? "#ff4a4a" : "#222"} 
+              />
             </TouchableOpacity>
           </View>
 
@@ -125,7 +170,7 @@ const HotelDetails = () => {
                 setShowCheckIn(false);
                 if (selectedDate) {
                   setCheckInDate(selectedDate);
-                  // Reset checkout date if it's before check-in
+                  
                   if (checkOutDate && selectedDate > checkOutDate) {
                     setCheckOutDate(null);
                   }
@@ -217,7 +262,7 @@ const HotelDetails = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#fff',
   },
   container: {
     flex: 1,
@@ -289,11 +334,14 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 4,
   },
-  saveButton: {
+  favoriteButton: {
     backgroundColor: '#f5f5f5',
     borderRadius: 20,
     padding: 8,
     marginLeft: 8,
+  },
+  favoriteButtonActive: {
+    backgroundColor: '#ffe5e5',
   },
   amenitiesRow: {
     flexDirection: 'row',
