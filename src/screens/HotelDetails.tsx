@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, SafeAreaView } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, ScrollView, TextInput, SafeAreaView, Modal } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/types";
 import { db, auth } from "../services/firebase";
@@ -7,7 +7,8 @@ import { collection, addDoc } from "firebase/firestore";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from '@expo/vector-icons';
 import MapView, { Marker } from 'react-native-maps';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Calendar } from 'react-native-calendars';
+import moment from 'moment';
 import { useFavorites } from "../context/FavoritesContext";
 
 type HotelDetailsRouteProp = RouteProp<RootStackParamList, "HotelDetails">;
@@ -18,8 +19,9 @@ const HotelDetails = () => {
   const [guestCount, setGuestCount] = useState(1);
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
-  const [showCheckIn, setShowCheckIn] = useState(false);
-  const [showCheckOut, setShowCheckOut] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedStartDate, setSelectedStartDate] = useState('');
+  const [selectedEndDate, setSelectedEndDate] = useState('');
 
   const route = useRoute<HotelDetailsRouteProp>();
   const navigation = useNavigation<HotelDetailsNavProp>();
@@ -36,6 +38,65 @@ const HotelDetails = () => {
 
   const nights = calculateNights();
   const totalPrice = nights * guestCount * Number(hotel.price || 0);
+
+  const getMarkedDates = () => {
+    const markedDates: any = {};
+    
+    if (selectedStartDate) {
+      markedDates[selectedStartDate] = {
+        startingDay: true,
+        color: '#2E7D32',
+        textColor: 'white'
+      };
+    }
+
+    if (selectedStartDate && selectedEndDate) {
+      let currentDate = moment(selectedStartDate);
+      const endDate = moment(selectedEndDate);
+
+      while (currentDate.isBefore(endDate, 'day')) {
+        currentDate = currentDate.add(1, 'days');
+        const dateString = currentDate.format('YYYY-MM-DD');
+        
+        if (dateString === selectedEndDate) {
+          markedDates[dateString] = {
+            endingDay: true,
+            color: '#2E7D32',
+            textColor: 'white'
+          };
+        } else {
+          markedDates[dateString] = {
+            color: '#2E7D32',
+            textColor: 'white'
+          };
+        }
+      }
+    }
+
+    return markedDates;
+  };
+
+  const handleDayPress = (day: any) => {
+    if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+      // Başlangıç tarihini seç
+      setSelectedStartDate(day.dateString);
+      setSelectedEndDate('');
+      setCheckInDate(new Date(day.dateString));
+      setCheckOutDate(null);
+    } else {
+      // Bitiş tarihini seç
+      if (moment(day.dateString).isBefore(selectedStartDate)) {
+        // Eğer seçilen tarih başlangıç tarihinden önceyse, başlangıç tarihini güncelle
+        setSelectedStartDate(day.dateString);
+        setCheckInDate(new Date(day.dateString));
+      } else {
+        // Bitiş tarihini ayarla
+        setSelectedEndDate(day.dateString);
+        setCheckOutDate(new Date(day.dateString));
+        setShowCalendar(false);
+      }
+    }
+  };
 
   const handleReservation = async () => {
     const userId = auth.currentUser?.uid;
@@ -170,47 +231,55 @@ const HotelDetails = () => {
 
           <View style={styles.datePickerContainer}>
             <Text style={styles.sectionTitle}>Giriş ve Çıkış Tarihi</Text>
-            <TouchableOpacity onPress={() => setShowCheckIn(true)} style={styles.dateButton}>
-              <Text style={styles.dateText}>Giriş Tarihi: {checkInDate ? checkInDate.toLocaleDateString() : 'Seçilmedi'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setShowCheckOut(true)} style={styles.dateButton}>
-              <Text style={styles.dateText}>Çıkış Tarihi: {checkOutDate ? checkOutDate.toLocaleDateString() : 'Seçilmedi'}</Text>
+            <TouchableOpacity onPress={() => setShowCalendar(true)} style={styles.dateButton}>
+              <Text style={styles.dateText}>
+                {checkInDate ? `Giriş: ${moment(checkInDate).format('DD/MM/YYYY')}` : 'Giriş Tarihi Seçin'}
+                {checkOutDate ? ` - Çıkış: ${moment(checkOutDate).format('DD/MM/YYYY')}` : ''}
+              </Text>
             </TouchableOpacity>
           </View>
 
-          {showCheckIn && (
-            <DateTimePicker
-              value={checkInDate || new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowCheckIn(false);
-                if (selectedDate) {
-                  setCheckInDate(selectedDate);
-                  
-                  if (checkOutDate && selectedDate > checkOutDate) {
-                    setCheckOutDate(null);
-                  }
-                }
-              }}
-              minimumDate={new Date()}
-            />
-          )}
-
-          {showCheckOut && (
-            <DateTimePicker
-              value={checkOutDate || new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowCheckOut(false);
-                if (selectedDate) {
-                  setCheckOutDate(selectedDate);
-                }
-              }}
-              minimumDate={checkInDate || new Date()}
-            />
-          )}
+          <Modal
+            visible={showCalendar}
+            transparent={true}
+            animationType="slide"
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.calendarContainer}>
+                <View style={styles.calendarHeader}>
+                  <Text style={styles.calendarTitle}>Tarih Seçin</Text>
+                  <TouchableOpacity onPress={() => setShowCalendar(false)}>
+                    <Ionicons name="close" size={24} color="#000" />
+                  </TouchableOpacity>
+                </View>
+                <Calendar
+                  onDayPress={handleDayPress}
+                  markedDates={getMarkedDates()}
+                  minDate={moment().format('YYYY-MM-DD')}
+                  markingType="period"
+                  theme={{
+                    calendarBackground: '#fff',
+                    textSectionTitleColor: '#000',
+                    selectedDayBackgroundColor: '#2E7D32',
+                    selectedDayTextColor: '#fff',
+                    todayTextColor: '#2E7D32',
+                    dayTextColor: '#000',
+                    textDisabledColor: '#d9e1e8',
+                    dotColor: '#2E7D32',
+                    selectedDotColor: '#fff',
+                    arrowColor: '#2E7D32',
+                    monthTextColor: '#000',
+                    textDayFontFamily: 'System',
+                    textMonthFontFamily: 'System',
+                    textDayHeaderFontFamily: 'System',
+                    textDayFontSize: 16,
+                    textMonthFontSize: 16,
+                    textDayHeaderFontSize: 14
+                  }}
+                />
+              </View>
+            </View>
+          </Modal>
 
           <View style={styles.guestCounterContainer}>
             <Text style={styles.inputLabel}>Kişi Sayısı</Text>
@@ -459,12 +528,13 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     padding: 12,
-    backgroundColor: '#eee',
-    borderRadius: 8,
+    backgroundColor: 'rgba(46, 125, 50, 0.1)',
+    borderRadius: 10,
   },
   dateText: {
-    fontSize: 15,
-    color: '#666',
+    color: '#2E7D32',
+    fontSize: 16,
+    textAlign: 'center',
   },
   guestCounterContainer: {
     marginBottom: 16,
@@ -479,6 +549,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     minWidth: 32,
     textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  calendarContainer: {
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  calendarTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

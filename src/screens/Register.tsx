@@ -11,7 +11,7 @@ import {
   Alert,
   SafeAreaView,
 } from "react-native";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
 import { auth, db } from "../services/firebase";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -36,7 +36,6 @@ const Register = () => {
       console.log("Kullanıcı kaydı başlatılıyor...");
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log("Firebase Auth kaydı başarılı, UID:", userCredential.user.uid);
-      
       
       await updateProfile(userCredential.user, {
         displayName: name,
@@ -63,14 +62,26 @@ const Register = () => {
         await setDoc(userDocRef, userData, { merge: true });
         console.log("Firestore'a kullanıcı verisi başarıyla kaydedildi");
         
-        navigation.replace("Main");
+        await signOut(auth);
+        
+        Alert.alert(
+          "Başarılı",
+          "Hesabınız başarıyla oluşturuldu. Lütfen giriş yapın.",
+          [
+            {
+              text: "Tamam",
+              onPress: () => navigation.replace("Login")
+            }
+          ]
+        );
       } catch (firestoreError: any) {
         console.error("Firestore kayıt hatası:", JSON.stringify(firestoreError));
+        await signOut(auth);
         Alert.alert(
           "Uyarı",
           "Hesabınız oluşturuldu ancak profil bilgileriniz kaydedilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
         );
-        navigation.replace("Main");
+        navigation.replace("Login");
       }
     } catch (error: any) {
       console.error("Kayıt hatası:", error);
