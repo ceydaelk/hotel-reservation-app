@@ -2,7 +2,7 @@
 
 A mobile application where users can search for hotels, make reservations, and manage their bookings.
 
-##  Features
+## 🚀 Features
 
 - Hotel search and filtering
 - Detailed hotel information and photos
@@ -12,7 +12,7 @@ A mobile application where users can search for hotels, make reservations, and m
 - Booking history
 - Real-time notifications
 
-##  Technologies
+## 🛠 Technologies
 
 - React Native
 - Expo
@@ -24,12 +24,12 @@ A mobile application where users can search for hotels, make reservations, and m
 - Moment.js
 - React Native Calendars
 
-## Supported Platforms
+## 📱 Supported Platforms
 
 - iOS
 - Android
 
-##  Installation
+## 🔧 Installation
 
 1. Clone the project:
 ```bash
@@ -79,5 +79,20 @@ hotel-reservation-app/
 ├── android/          # Android configuration files
 ├── ios/             # iOS configuration files
 └── package.json     # Dependencies and scripts
+```
+
+## 🤝 Contributing
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+
+
+
+
+
 
 
