@@ -24,7 +24,7 @@ const Home = () => {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
-  const [userInitials, setUserInitials] = useState("CE");
+  const [userInitials, setUserInitials] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<string | null>(null);
   const [selectedEndDate, setSelectedEndDate] = useState<string | null>(null);
@@ -48,13 +48,36 @@ const Home = () => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setCurrentUser(user);
       if (user) {
-        // Firestore'dan kullanıcı bilgilerini al
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          const initials = `${userData.firstName?.[0] || ''}${userData.lastName?.[0] || ''}`;
-          setUserInitials(initials.toUpperCase());
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const initials = `${userData.firstName?.[0] || ''}${userData.lastName?.[0] || ''}`;
+            if (initials.trim()) {
+              setUserInitials(initials.toUpperCase());
+            } else if (user.displayName) {
+              // Fallback to displayName if Firestore data doesn't have initials
+              const names = user.displayName.split(' ');
+              const displayNameInitials = `${names[0]?.[0] || ''}${names[names.length - 1]?.[0] || ''}`;
+              setUserInitials(displayNameInitials.toUpperCase());
+            }
+          } else if (user.displayName) {
+            // If no Firestore document exists, use displayName
+            const names = user.displayName.split(' ');
+            const displayNameInitials = `${names[0]?.[0] || ''}${names[names.length - 1]?.[0] || ''}`;
+            setUserInitials(displayNameInitials.toUpperCase());
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          // Fallback to displayName in case of error
+          if (user.displayName) {
+            const names = user.displayName.split(' ');
+            const displayNameInitials = `${names[0]?.[0] || ''}${names[names.length - 1]?.[0] || ''}`;
+            setUserInitials(displayNameInitials.toUpperCase());
+          }
         }
+      } else {
+        setUserInitials(""); // Clear initials when user is not logged in
       }
     });
     return () => unsubscribe();
@@ -130,7 +153,7 @@ const Home = () => {
 
   const handleDateSelect = (day: any) => {
     if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
-      // İlk tarih seçimi veya yeni bir seçim başlangıcı
+     
       const startDate = day.dateString;
       setSelectedStartDate(startDate);
       setSelectedEndDate(null);
@@ -138,7 +161,7 @@ const Home = () => {
         [startDate]: { startingDay: true, color: '#2E7D32', textColor: 'white' }
       });
     } else {
-      // Bitiş tarihi seçimi
+    
       const endDate = day.dateString;
       if (moment(endDate).isBefore(selectedStartDate)) {
         Alert.alert('Hata', 'Çıkış tarihi giriş tarihinden önce olamaz.');
@@ -146,11 +169,11 @@ const Home = () => {
       }
       setSelectedEndDate(endDate);
 
-      // Tarih aralığını işaretle
+ 
       const range = getDateRange(selectedStartDate, endDate);
       setMarkedDates(range);
       
-      // Tarihler seçildiğinde modal'ı kapat
+      
       setTimeout(() => setShowDatePicker(false), 500);
     }
   };

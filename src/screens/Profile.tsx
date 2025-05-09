@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image, SafeAreaView, ImageBackground } from "react-native";
 import { auth, db } from "../services/firebase";
 import { signOut } from "firebase/auth";
 import { useNavigation } from "@react-navigation/native";
@@ -18,15 +18,32 @@ const Profile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setUserData(docSnap.data());
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            console.log("Fetched user data:", data); // Debug log
+            setUserData(data);
+          } else {
+            console.log("No user document found!"); // Debug log
+            // Eğer Firestore'da veri yoksa, displayName'i parçalayarak gösterelim
+            if (user.displayName) {
+              const [firstName, ...lastNameParts] = user.displayName.split(" ");
+              const lastName = lastNameParts.join(" ");
+              setUserData({
+                firstName: firstName || "",
+                lastName: lastName || "",
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
         }
       }
     };
     fetchUserData();
-  }, []);
+  }, [user]);
 
   const handleLogout = async () => {
     Alert.alert("Çıkış Yap", "Çıkış yapmak istediğinizden emin misiniz?", [
@@ -51,27 +68,32 @@ const Profile = () => {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Ionicons name="person-circle-outline" size={100} color="#2E7D32" />
-            <Text style={styles.title}>Profil</Text>
+      <ImageBackground
+        source={{ uri: "https://images.pexels.com/photos/24877175/pexels-photo-24877175/free-photo-of-ucus-peyzaj-manzara-gokyuzu.jpeg" }}
+        style={styles.backgroundImage}
+      >
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: 'rgba(0, 0, 0, 0.4)' }]}>
+          <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+            <View style={styles.header}>
+              <Ionicons name="person-circle-outline" size={100} color="#fff" />
+              <Text style={[styles.title, { color: '#fff' }]}>Profil</Text>
+            </View>
+            <Text style={[styles.message, { color: '#fff' }]}>
+              Rezervasyon yapmak ve favorilerinizi kaydetmek için giriş yapın.
+            </Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={[styles.button, styles.loginButton]} onPress={navigateToLogin}>
+                <Ionicons name="log-in-outline" size={20} color="#fff" style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Giriş Yap</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.registerButton]} onPress={navigateToRegister}>
+                <Ionicons name="person-add-outline" size={20} color="#fff" style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Kayıt Ol</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.message}>
-            Rezervasyon yapmak ve favorilerinizi kaydetmek için giriş yapın.
-          </Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, styles.loginButton]} onPress={navigateToLogin}>
-              <Ionicons name="log-in-outline" size={20} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.buttonText}>Giriş Yap</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.registerButton]} onPress={navigateToRegister}>
-              <Ionicons name="person-add-outline" size={20} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.buttonText}>Kayıt Ol</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </ImageBackground>
     );
   }
 
@@ -80,76 +102,165 @@ const Profile = () => {
   const avatarUri = `https://api.dicebear.com/6.x/initials/png?seed=${initials}`;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Image source={{ uri: avatarUri }} style={styles.avatar} />
-          <Text style={styles.name}>{fullName}</Text>
+    <ImageBackground
+      source={{ uri: "https://images.pexels.com/photos/24877175/pexels-photo-24877175/free-photo-of-ucus-peyzaj-manzara-gokyuzu.jpeg" }}
+      style={styles.backgroundImage}
+    >
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: 'rgba(0, 0, 0, 0.4)' }]}>
+        <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+          <View style={styles.header}>
+            <Image source={{ uri: avatarUri }} style={styles.avatar} />
+            <Text style={[styles.name, { color: '#fff' }]}>
+              {userData?.firstName} {userData?.lastName}
+            </Text>
+            <Text style={styles.email}>{user.email}</Text>
+          </View>
+
+          <View style={styles.menuContainer}>
+            <View style={styles.menuItem}>
+              <View style={styles.menuIconContainer}>
+                <Ionicons name="person-outline" size={22} color="#fff" />
+              </View>
+              <View style={styles.menuContent}>
+                <Text style={styles.menuTitle}>Profil Bilgileri</Text>
+                <Text style={styles.menuSubtitle}>{userData?.firstName} {userData?.lastName}</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => navigation.navigate("ReservationHistory")}
+            >
+              <View style={styles.menuIconContainer}>
+                <Ionicons name="bookmark-outline" size={22} color="#fff" />
+              </View>
+              <View style={styles.menuContent}>
+                <Text style={styles.menuTitle}>Rezervasyonlarım</Text>
+                <Text style={styles.menuSubtitle}>Tüm rezervasyonlarınızı görüntüleyin</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={22} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => navigation.navigate("Favorites")}
+            >
+              <View style={styles.menuIconContainer}>
+                <Ionicons name="heart-outline" size={22} color="#fff" />
+              </View>
+              <View style={styles.menuContent}>
+                <Text style={styles.menuTitle}>Favorilerim</Text>
+                <Text style={styles.menuSubtitle}>Favori otellerinizi görüntüleyin</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={22} color="#fff" />
+            <Text style={styles.logoutText}>Çıkış Yap</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.infoContainer}>
-          <Text style={styles.label}>E-posta:</Text>
-          <Text style={styles.info}>{user.email}</Text>
-        </View>
-        <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={20} color="#fff" style={styles.logoutIcon} />
-          <Text style={styles.buttonText}>Çıkış Yap</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: "#f7f7f7",
   },
   container: {
     flex: 1,
     padding: 20,
-    marginTop: 60,
-    backgroundColor: "#fff",
     alignItems: "center",
   },
   header: {
     alignItems: "center",
+    marginBottom: 30,
+    marginTop: 20,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 12,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: '#fff',
+    marginBottom: 4,
+  },
+  email: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  menuContainer: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 15,
+    padding: 10,
     marginBottom: 20,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  menuIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  menuContent: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  menuSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginTop: 2,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 59, 48, 0.8)',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginTop: 'auto',
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     marginTop: 10,
-    color: "#333",
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 12,
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: "600",
-    color: "#333",
-  },
-  infoContainer: {
-    marginBottom: 20,
-    padding: 20,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 12,
-  },
-  label: {
-    fontSize: 16,
-    color: "#555",
-  },
-  info: {
-    fontSize: 18,
-    color: "#222",
-    fontWeight: "500",
   },
   message: {
     fontSize: 16,
-    color: "#666",
     textAlign: "center",
     marginBottom: 30,
     lineHeight: 24,
@@ -177,16 +288,10 @@ const styles = StyleSheet.create({
   registerButton: {
     backgroundColor: "#2E7D32",
   },
-  logoutButton: {
-    backgroundColor: "#FF3B30",
-  },
   buttonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
-  },
-  logoutIcon: {
-    marginRight: 8,
   },
   buttonIcon: {
     marginRight: 8,
